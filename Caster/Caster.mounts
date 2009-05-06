@@ -1,0 +1,2 @@
+FFMJ2; password; STR;FFMJ2;Frankfurt;RTCM 2.1;1(1),3(19),16(59);0;GPS;GREF;DEU;50.12;8.68;0;1;GPSNet V2.10;none;N;N;560;Demo
+mnt; password; STR;mnt;Frankfurt;RTCM 2.2;3(19),16(59),18(1),19(1);2;GPS;GREF;DEU;50.09;8.66;0;0;GPSNet V1.9;none;N;N;2800;Demo
