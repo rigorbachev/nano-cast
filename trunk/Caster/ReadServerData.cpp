@@ -1,10 +1,11 @@
 #include "ReadServerData.h"
 #include <algorithm>
+#include <unistd.h>
 
 
 
-ReadServerData::ReadServerData(int pfd, MountPoint* mnt) 
-    : fd(pfd), Mnt(mnt), buf(mnt->Buf)
+ReadServerData::ReadServerData(int pfd, MountPoint* mnt, int timeout) 
+    : fd(pfd), Mnt(mnt), Timeout(timeout), buf(mnt->Buf)
 {
 }
 
@@ -63,7 +64,7 @@ bool ReadServerData::Resume()
     } while (actual == size);
 
     // Sleep, waiting for more input data
-    return WaitForRead(fd, 10000);
+    return WaitForRead(fd, Timeout);
 }
 
 

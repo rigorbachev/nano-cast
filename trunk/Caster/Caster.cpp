@@ -19,21 +19,27 @@
 #include "DataBuffer.h"
 #include "AcceptConnection.h"
 
+// Caster configuration
+int Port = 9999;
+int NrStreams = 1024;
+char *MountFile = "Caster.mounts";
+int DebugLevel = 9;
+
 
 int main()
 {
 
     // Configure the dispatcher to handle a bunch of connections
-    if (Dispatcher::Configure(1024) != OK)
+    if (Dispatcher::Configure(Port, NrStreams) != OK)
         SysError("Can't configure Dispatcher\n");
 
     // Read in the mount points from the "Caster.mounts" configuration file
     MountTable mounts;
-    if (mounts.ReadFromFile("Caster.mounts") != OK)
+    if (mounts.ReadFromFile(MountFile) != OK)
         return Error("Can't read mount points from %s\n", "Caster.mounts");
 
     // Prepare to accept incoming network connections
-    AcceptConnection accpt(mounts);
+    AcceptConnection accpt(Port, mounts);
 
     // Start the dispatcher loop with a single handler to accept the incoming connections
     Dispatcher::Start(&accpt);

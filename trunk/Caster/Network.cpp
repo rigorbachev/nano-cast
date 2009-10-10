@@ -115,7 +115,7 @@ bool Network::Read(int fd, byte* buf, int size, int& actual)
     else if (actual == 0)
         actual = -1;
 
-    debug("Read fd=%d  actual=%d buf=", fd, actual);
+    debug("Read fd=%d size=%d  actual=%d buf=", fd, size, actual);
     for (int i=0; i<actual; i++)
         debug("%c", buf[i]);
     debug("\n");
@@ -140,7 +140,7 @@ bool Network::Write(int fd, const byte* buf, int size, int& actual)
     else if (actual == -1)
          actual = 0;
 
-    debug("Write fd=%d  size=%d actual=%d \n", fd, actual);
+    debug("Write fd=%d  size=%d actual=%d \n", fd, size, actual);
     return OK;
 }
 

@@ -17,7 +17,7 @@ public:
 protected:
     int Fd;
     MountTable& Mounts;
-    static const int BufSize = 256;
+    static const int BufSize = 1024;
     byte Buf[BufSize+1];
     int Actual;
 

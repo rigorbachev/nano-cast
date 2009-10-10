@@ -8,7 +8,7 @@
 
 class AcceptConnection : public Fragment {
 public:
-    AcceptConnection(MountTable& mnt);
+    AcceptConnection(int port, MountTable& mnt);
     ~AcceptConnection();
 
     bool Resume();
@@ -17,6 +17,7 @@ public:
 protected:
     int fd;
     MountTable& Mnt;
+    int Port;
 };
 
 

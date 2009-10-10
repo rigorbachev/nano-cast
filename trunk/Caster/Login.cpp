@@ -48,7 +48,7 @@ bool Login::Resume()
     Buf[Actual] = 0;
 
     // if we don't have a complete buffer frame, try again
-    if (!FrameComplete()) 
+    if (!FrameComplete() && Actual < BufSize)
         return WaitForRead(Fd, 10000);
 
     // if buffer is full,
@@ -86,20 +86,20 @@ bool Login::ServerLogin(Parse& token)
     // Get the password and mount point
     char name[MaxName+1];  char password[MaxPassword+1];
     if (GetHeader(token, name, password) != OK)
-        return Shutdown("ERROR - Mount Point Invalid\r\n");
+        return Shutdown("ERROR - Mount Point Invalid\r\n\r\n");
     
     // Locate the mount point
     MountPoint* mnt = Mounts.Lookup(name);
     if (mnt == NULL) 
-        return Shutdown("ERROR - Mount Point Invalid\r\n");
+        return Shutdown("ERROR - Mount Point Invalid\r\n\r\n");
 
     // Check the password
     if (!mnt->ValidPassword(password)) 
-        return Shutdown("ERROR - Bad Password\r\n");
+        return Shutdown("ERROR - Bad Password\r\n\r\n");
 
     // Make sure it is isn't already mounted
     if (mnt->IsMounted()) 
-        return Shutdown("ERROR - Mount Point Taken\r\n");
+        return Shutdown("ERROR - Mount Point Taken\r\n\r\n");
 
     // Mount it
     if (mnt->Mount() != OK)
@@ -111,7 +111,7 @@ bool Login::ServerLogin(Parse& token)
         return Abort("Can't create task to read server data\n");
 
     // Send the OK message
-    WriteShort("ICY 200 OK\r\n");
+    WriteShort("ICY 200 OK\r\n\r\n");
 
     // Switch to task for reading server data
     return Switch(server);
@@ -181,7 +181,7 @@ bool Login::ClientLogin(Parse& token)
         return Abort("Can't create task to read server data\n");
 
     // Send a message saying "all is fine"
-    WriteShort("ICY 200 OK\r\n");
+    WriteShort("ICY 200 OK\r\n\r\n");
 
     // Switch control to the client fragment. We are done.
     return Switch(client);
