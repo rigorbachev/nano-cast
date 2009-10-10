@@ -36,7 +36,7 @@ public:
     // These are for setting up the dispatcher itself
     Dispatcher(int MaxFds = 0);
     ~Dispatcher();
-    static bool Configure(int MaxFds = 0);
+    static bool Configure(int port, int MaxFds = 0);
     static bool Cleanup();
 
     // Wrappers around net. 

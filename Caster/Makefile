@@ -1,7 +1,12 @@
 all: Caster
 
-CROSS:=~/Desktop/kamikaze_7.09/staging_dir_armeb
-CROSSBIN:=$(CROSS)/armeb-linux/bin
+clean:
+	rm *.o Caster
+
+CROSS:=~/toolchain-armeb
+CROSSBIN:=$(CROSS)/usr/armeb-openwrt-linux-uclibcgnueabi/bin
+#CROSS=
+#CROSSBIN=/usr/bin
 
 AR:=$(CROSSBIN)/ar
 LD:=$(CROSSBIN)/ld
@@ -9,8 +14,8 @@ GCC:=$(CROSSBIN)/gcc
 CC:=$(GCC)
 CXX:=$(CROSSBIN)/g++
 
-CPPFLAGS:=-I $(CROSS)/usr/include -I $(CROSS)/include
-CFLAGS:= -ggdb3 $(CPPFLAGS)
+CPPFLAGS:= -ggdb -I $(CROSS)/usr/include -I $(CROSS)/include
+CFLAGS:= $(CPPFLAGS)
 LDFLAGS:= -static -L $(CROSS)/usr/lib -L $(CROSS)/lib -lgcc
 
 SOURCES:=$(wildcard *.cpp)

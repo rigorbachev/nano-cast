@@ -15,7 +15,7 @@
 class ReadServerData : public Fragment {
 public:
 
-    ReadServerData(int fd, MountPoint* mnt);
+    ReadServerData(int fd, MountPoint* mnt, int timeout=10000);
     ~ReadServerData();
 
     bool Resume();
@@ -25,6 +25,7 @@ protected:
    int fd;
    MountPoint* Mnt;
    DataBuffer& buf;
+   int Timeout;
    static const int TooFarBehind = DataBuffer::BufSize / 2;
 
    void WakeupWaiters();

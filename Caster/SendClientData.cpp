@@ -1,5 +1,6 @@
 #include "SendClientData.h"
 #include <algorithm>
+#include <unistd.h>
 
 
 
@@ -37,7 +38,7 @@ bool SendClientData::Resume()
 // Resume sending data to the client after an event occurs
 /////////////////////////////////////////////////////////////////////////////
 {
-    debug("SendClientData: Resume  fd=%d count=%d buf.count=%d\n", fd, count, buf.count);
+    debug("SendClientData: Resume  fd=%d count=%d buf.count=%lld\n", fd, count, buf.count);
 
     // If no longer mounted, then exit
     if (Mnt->State != MOUNTED)  Abort("Mountpoint disappeared\n");

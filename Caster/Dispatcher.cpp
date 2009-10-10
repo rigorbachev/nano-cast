@@ -15,7 +15,7 @@ bool Dispatcher::done;
 //Dispatcher::Dispatcher(int maxfds)
 //    : poll(maxfds), MaxFds(maxfds)
 
-bool Dispatcher::Configure(int maxfds)
+bool Dispatcher::Configure(int port, int maxfds)
 {
     MaxFds = maxfds;
     net = new Network(MaxFds);
