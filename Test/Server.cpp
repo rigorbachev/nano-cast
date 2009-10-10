@@ -8,7 +8,7 @@
 int main()
 {
     int fd = socket(PF_INET,SOCK_STREAM, 0);
-    struct sockaddr addr = {AF_INET, {9999>>8, 9999, 192,168, 0, 23}};
+    struct sockaddr addr = {AF_INET, {9999>>8, 9999, 127,0, 0, 1}};
     int ret = connect(fd, &addr, sizeof(addr));
 
     write(fd, 
