@@ -23,7 +23,7 @@
 int Port = 9999;
 int NrStreams = 1024;
 char *MountFile = "Caster.mounts";
-int DebugLevel = 9;
+int DebugLevel = 0;
 
 
 int main()
