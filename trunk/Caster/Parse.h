@@ -12,11 +12,13 @@
 class Parse {
 public:
     Parse(const byte* buf, int len);
+    Parse(const char* str);
     ~Parse();
 
     bool Next(const char* delimiters);
 
     bool operator==(const char* str);
+    bool operator!=(const char* str);
     bool GetToken(char *str, int len);
     byte GetDelimiter();
 

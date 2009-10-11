@@ -5,8 +5,8 @@ clean:
 
 CROSS:=~/toolchain-armeb
 CROSSBIN:=$(CROSS)/usr/armeb-openwrt-linux-uclibcgnueabi/bin
-#CROSS=
-#CROSSBIN=/usr/bin
+CROSS=
+CROSSBIN=/usr/bin
 
 AR:=$(CROSSBIN)/ar
 LD:=$(CROSSBIN)/ld
