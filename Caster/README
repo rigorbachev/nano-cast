@@ -1,0 +1,44 @@
+nano-cast is a lightweight Ntrip caster.
+
+nano-cast is designed to run on small, single board computers while
+  supporting large numbers of clients.
+  o Single threaded architecture avoids synchronization.
+  o Based on event "callbacks"
+  o Uses linux's /dev/epoll to manage multiple sockets
+  o Low memory use per client
+
+The source code is in three directories:
+  Dispatcher -- Event management, sockets, callbacks
+  UsefulStuff -- Error handling, lists, parsing
+  Ntrip      -- Ntrip protocol, logging in, ntrip mount table, main application
+
+This implementation should run under any Linux implementation; it is targeted
+for cross compiling and deploying under open-wrt.
+
+CallBacks
+---------
+A CallBack is a small piece of code and data which is called whenever an event 
+occurs. Each CallBack contains enough information so it knows what to do the 
+next time it is invoked. More complex operations can be implemented by a
+sequence of CallBack, each one scheduling the subsequent one.
+     cb->Call( status )
+
+
+Dispatcher
+---------
+The Dispatcher manages CallBacks. It is the 
+
+Poll
+----
+
+
+TODO: 
+  Use reference counts to ensure critical objects are valid and don't leak
+      (Mainly for sockets ... )
+  Implement Ntrip 2.0 protocol. (Drop 1.0?)
+  Distribute data to and from other Ntrip casters.
+  Control panel to see status and to change configuration.
+  Log connections and statistics
+  Limit per-user, per-address throughput and connections.
+  Create open-wrt installation package
+  Dynamic reconfiguration.
