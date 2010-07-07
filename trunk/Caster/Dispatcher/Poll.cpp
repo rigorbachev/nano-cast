@@ -9,7 +9,7 @@
 #include "Dispatcher.h"
 
 Pollable::Pollable(Handle_t h)
-: handle(h), readCallBack(NULL), writeCallBack(NULL), next(NULL)
+: handle(h), readCallBack(NULL), writeCallBack(NULL), next(NULL), eof(false)
 {
     debug("Pollable::Pollable(%d)\n", handle);
     Poll::Register(this);
@@ -25,17 +25,32 @@ Pollable::~Pollable()
 
 bool Pollable::WaitForRead(CallBack* c, int timeout)
 {
-    readCallBack = c;
-    if (timeout == -1)   readExpiration = 0;
-    else                 readExpiration = Poll::clock + timeout;
+    debug("Pollable::WaitForRead(%p, %d) fd=%d eof=%d\n",c,timeout,handle,eof);
+    if (eof) {
+        Dispatcher::Call(c, OK);
+    
+    } else {
+        readCallBack = c;
+        if (timeout == -1)   readExpiration = 0;
+        else                 readExpiration = Poll::clock + timeout;
+    }
+
     return OK;
 }
 
+
 bool Pollable::WaitForWrite(CallBack* c, int timeout)
 {
-    writeCallBack = c;
-    if (timeout == -1)   writeExpiration = 0;
-    else                 writeExpiration = Poll::clock + timeout;
+    debug("Pollable::WaitForWrite(%p, %d) fd=%d eof=%d\n",c,timeout,handle,eof);
+    if (eof) {
+        Dispatcher::Call(c, OK);
+
+    } else {
+        writeCallBack = c;
+        if (timeout == -1)   writeExpiration = 0;
+        else                 writeExpiration = Poll::clock + timeout;
+    }
+
     return OK;
 }
 
@@ -129,13 +144,17 @@ bool Poll::Reap(int msec)
 
 		// For each of the events
 		for (int i=0; i<actual; i++) {
-			Pollable* p = (Pollable*) events[i].data.ptr;
+                        PollEvent& ev = events[i];
+			Pollable* p = (Pollable*) ev.data.ptr;
                         debug("   fd=%d  readable=%d  writable=\n",
-                              p->handle, ReadReady(events[i]), 
-                              WriteReady(events[i]));
+                              p->handle, ReadReady(ev), 
+                              WriteReady(ev));
+                       
+                        // Make note if we have error or EOF
+                        p->eof = PollError(ev);
      
 			// Schedule the handler if waiting on read
-			if (p->readCallBack != NULL && ReadReady(events[i])) {
+			if (p->readCallBack != NULL && ReadReady(ev)) {
 				Dispatcher::Call(p->readCallBack, OK);
 				p->readCallBack = NULL;
 			}

@@ -30,7 +30,8 @@ public:
     static void Call(CallBack *h, bool status);
 
     // Protected
-    static List<CallBack>   runList;
+    //   Note: we use a FifoList to prevent starvation
+    static FifoList<CallBack>   runList;
     static bool     done;          // flag telling us when to stop
 };
     

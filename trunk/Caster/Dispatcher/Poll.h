@@ -8,16 +8,19 @@
 // Each fd must be "registered".
 //
 // Read() and Write() are non-blocking, and will return 0 if no data can 
-//     be transferred.
+//     be transferred.  They return -1 if end-of-file.
 //
 // Reap() returns a list of events which have occurred since the last Reap().
 //     event.ReadReady() and event.WriteReady() indicate it's time to try
 //     another transfer. 
 //
-// Note that events are created only if a partial buffer was
-//     transferred by a Read() or Write() call. If a complete transfer took place,
-//     then no events will be created until the application issues an additional 
-//     request.
+// Note that Poll should be called only after a partial transfer took place.
+//    The assumption is, a partial transfer got all the data in the buffer,
+//    and the next event will be when more data arrives.  
+// 
+// There is a small bit of magic to cover the end-of-file case. Then we
+//    have a partial transfer, but there are no future events coming in
+//    to wake up Linux /dev/poll. 
 //
 //////////////////////////////////////////////////////////////////////////////
 #include "Util.h"
@@ -42,6 +45,7 @@ public:
 	CallBack     *writeCallBack;
 	time_t         readExpiration;
 	time_t         writeExpiration;
+        bool           eof;
 
 public:
 	Pollable(Handle_t h);
@@ -59,6 +63,8 @@ inline bool ReadReady(PollEvent& ev)
     {return (ev.events & (EPOLLIN|PollErrors)) != 0;}
 inline bool WriteReady(PollEvent& ev) 
     {return (ev.events & (EPOLLOUT|PollErrors)) != 0;}
+inline bool PollError(PollEvent& ev)
+    {return (ev.events & PollErrors) != 0;}
 inline int Handle(PollEvent& ev)
     {return ((Pollable*)ev.data.ptr)->handle;}
 

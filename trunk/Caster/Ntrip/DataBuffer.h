@@ -15,7 +15,7 @@ public:
     static const size_t BufSize = 8192;  // power of two desired
     byte Buffer[BufSize];
 
-    size_t count;
+    uint64 count;
 
     WaitList waiters;
 };

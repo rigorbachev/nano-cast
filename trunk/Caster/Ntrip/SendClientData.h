@@ -17,7 +17,7 @@ protected:
    Connection_ptr conn;
    MountPoint* Mnt;
    DataBuffer& buf;
-   size_t count;
+   uint64 count;  // total bytes sent on this connection.
    static const size_t TooFarBehind = DataBuffer::BufSize / 2;
 
 private:

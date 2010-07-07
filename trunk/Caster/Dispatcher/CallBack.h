@@ -25,6 +25,7 @@ public:
     bool Switch(CallBack* c, bool status = OK) ;
     bool WaitForRead(Pollable *c, int timeout = -1);
     bool WaitForWrite(Pollable *c, int timeout = -1);
+    bool Yield();
 };
 
 

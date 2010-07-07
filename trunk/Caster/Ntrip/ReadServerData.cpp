@@ -7,12 +7,14 @@
 ReadServerData::ReadServerData(Connection_ptr& c, MountPoint* m, int to)
     : conn(c), mnt(m), timeout(to), buf(mnt->Buf)
 {
+    debug("ReadServerData()  fd=%d  mnt=%s\n", conn->handle, mnt->Name);
 }
 
 
 
 ReadServerData::~ReadServerData()
 {
+    debug("~ReadServerData()  fd=%d  mnt=%s\n", conn->handle, mnt->Name);
     WakeupWaiters(!OK);
     mnt->Unmount();
 }
@@ -29,30 +31,31 @@ bool ReadServerData::Call(bool status)
 
     // Keep reading while there is more data
     ssize_t actual, size;
-    do {
 
-        // Read data, but not so much the consumers get left behind
-        int start = buf.count % buf.BufSize;
-        size = min(TooFarBehind/2, buf.BufSize-start);
-        if (conn->Read(buf.Buffer+start, size, actual) !=  OK)
-            return Error("Problems reading input data stream\n");
-        if (actual == -1)
-            return Error("Server has closed connection\n");
+    // Read data, but not so much the consumers get left behind
+    int start = buf.count % buf.BufSize;
+    size = min(TooFarBehind/2, buf.BufSize-start);
+    if (conn->Read(buf.Buffer+start, size, actual) !=  OK)
+        return Error("Problems reading input data stream\n");
+    debug("ReadServerData: start=%zd size=%zd actual=%zd buf.count=%lld\n",
+                           start,    size,    actual,    buf.count);
+    if (actual == -1)
+        return Error("Server has closed connection\n");
 
         // Update the number of bytes transferred
-        buf.count += actual;
+    buf.count += actual;
 
-        // if we received data, wakeup waiters
-        if (actual > 0)
-            WakeupWaiters(OK);
+    // if we actually transferred data, wake up the waiters
+    if (actual > 0)
+        WakeupWaiters(OK);
 
-    } while (actual == size);
+    // If we read all the data, then wait for more
+    if (actual <= size)
+        return WaitForRead(conn.get(), timeout);
 
-    // Sleep, waiting for more input data
-    if (WaitForRead(conn.get(), timeout) != OK)
-    	return Error();
-
-    return OK;
+    // otherwise, yield so the other events can be processed
+    else
+        return Yield();
 }
 
 
