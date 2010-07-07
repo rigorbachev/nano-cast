@@ -20,12 +20,11 @@ int main()
 
     for (;;){
         char buf[1024];
-        int len = read(fd, buf, sizeof(buf)-1);
+        int len = read(fd, buf, sizeof(buf));
         if (len <= 0) {
             printf("  len=%d  errno=%d\n", len, errno);
             break;
         }
-        buf[len] = '\0';
         debug("len=%d  \n", len);
     }
 

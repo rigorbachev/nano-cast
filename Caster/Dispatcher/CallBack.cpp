@@ -20,6 +20,11 @@ bool CallBack::WaitForWrite(Pollable *c, int timeout)
     return c->WaitForWrite(this, timeout);
 }
 
+bool CallBack::Yield()
+{
+    Dispatcher::Call(this, OK);
+    return OK;
+}
 
 bool WaitList::Wait(CallBack *c)
 {
@@ -33,3 +38,4 @@ bool WaitList::WakeupWaiters(bool status)
         Dispatcher::Call(Pop(), status);
     return OK;
 }
+

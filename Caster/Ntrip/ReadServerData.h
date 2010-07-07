@@ -17,7 +17,7 @@ class ReadServerData : public CallBack {
 public:
 
     ReadServerData(Connection_ptr& c, MountPoint* mnt, int timeout=10000);
-    ~ReadServerData();
+    virtual ~ReadServerData();
 
     bool Call(bool status);
 

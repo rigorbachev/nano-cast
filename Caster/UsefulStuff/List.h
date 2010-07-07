@@ -23,7 +23,7 @@ public:
 		first = NULL;
 	}
 
-	~List() {
+	virtual ~List() {
 		Delete();
 	}
 
@@ -83,5 +83,26 @@ public:
 
 
 
+// Just like List, but elements are pushed onto the end of the list.
+
+template <class Element>  class FifoList : public List<Element> {
+protected:
+    Element* last;
+
+public:
+    using List<Element>::first;
+
+    void Push(Element* e) 
+    {
+        e->next = NULL;
+
+        if (first == NULL) first = e;
+        else               last->next = e;
+
+        last = e;
+    }
+
+    void Add(Element* e) {Push(e);}
+};
 
 #endif /* LIST_H_ */

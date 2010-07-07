@@ -24,7 +24,7 @@ bool SendClientData::Call(bool status)
 // Call sending data to the client after an event occurs
 /////////////////////////////////////////////////////////////////////////////
 {
-    debug("SendClientData: Resume  count=%d buf.count=%ld\n", count, buf.count);
+    debug("SendClientData:Call count=%ld buf.count=%lld\n", count, buf.count);
 
     // If no longer mounted, then exit
     if (Mnt->State != MOUNTED) 
@@ -48,7 +48,7 @@ bool SendClientData::Call(bool status)
         if (actual != -1)
             count += actual;
 
-    // End "keep writing until ..."
+    // End "keep writing until ... we can't write any more"
         if (actual != size)
             break;
     }

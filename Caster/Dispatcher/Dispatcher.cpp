@@ -4,7 +4,7 @@
 
 
 
-List<CallBack>   Dispatcher::runList;
+FifoList<CallBack>   Dispatcher::runList;
 bool     Dispatcher::done;          // flag telling us when to stop
 
 
@@ -33,6 +33,7 @@ bool Dispatcher::Run()
     	// Invoke the runnable handlers  (careful, could loop!)
     	while (runList.Head() != NULL) {
     		CallBack *h = runList.Pop();
+                debug("Dispatcher::Run() - calling %p\n", h);
     		if (h->Call(h->status) != OK)
     			delete h;
     	}
@@ -61,6 +62,7 @@ bool Dispatcher::Stop()
 
 void Dispatcher::Call(CallBack *h, bool status)
 {
+    debug("Dispatcher::Call(%p, %d)\n", h, status);
 	h->status = status;
 	runList.Add(h);
 }

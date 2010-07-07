@@ -33,6 +33,7 @@ bool MountPoint::IsMounted()
 
 bool MountPoint::Mount() 
 {
+    debug("MountPoint::Mount() Name=%s\n", Name);
     if (IsMounted())
         return Error("Mountpoint %s is already mounted\n", Name);
 
@@ -46,6 +47,7 @@ bool MountPoint::Mount()
 
 bool MountPoint::Unmount()
 {
+    debug("MountPoint::Unmount() - Name=%s\n", Name);
     State = UNMOUNTED;
     Buf.waiters.WakeupWaiters();
 
@@ -55,6 +57,7 @@ bool MountPoint::Unmount()
 
 bool MountPoint::Init(const char* name)
 {
+    debug("MountPoint::Init(%s)\n", name);
     if (strlen(name) > MaxName)
         return Error("MountPoint: name too long\n");
 
