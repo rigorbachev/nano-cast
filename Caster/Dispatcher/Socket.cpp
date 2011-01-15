@@ -44,7 +44,7 @@ Socket::Socket(Handle_t h)
 
 
 
-bool Socket::Read(byte* buf, size_t size, ssize_t& actual)
+Status Socket::Read(byte* buf, size_t size, ssize_t& actual)
 {
     // Validity check.
     if (handle == BAD_HANDLE)
@@ -75,7 +75,7 @@ bool Socket::Read(byte* buf, size_t size, ssize_t& actual)
 }
 
 
-bool Socket::Write(const byte* buf, size_t size, ssize_t& actual)
+Status Socket::Write(const byte* buf, size_t size, ssize_t& actual)
 {
     // Validity check.
     if (handle == BAD_HANDLE)
@@ -96,13 +96,13 @@ bool Socket::Write(const byte* buf, size_t size, ssize_t& actual)
 
 
 
-bool Socket::Connect(NetAddress& remote)
+Status Socket::Connect(NetAddress& remote)
 {
     return Error("Network Connect isn't implemented yet\n");
 }
 
 
-bool Socket::Listen(int port)
+Status Socket::Listen(int port)
 {
     NetAddress local(INADDR_ANY, port);
 
@@ -123,35 +123,23 @@ bool Socket::Listen(int port)
 }
 
 
-bool Socket::Accept( Socket *(&returnSocket) )
+Status Socket::Accept( Socket*& newsock )
 {
     struct sockaddr remote;
     socklen_t addrlen = sizeof(remote);
-    returnSocket = NULL;
 
     Handle_t newfd = ::accept(handle, &remote, &addrlen);
     if (newfd == -1 && errno != EAGAIN)
         return SysError("Network is unable to accept a connection\n");
 
     // Create a new socket instance
-    bool err = OK;
-    Socket_ptr newsock(new Socket(newfd));
-    if (newsock.get() == NULL)
+    newsock = new Socket(newfd);
+    if (newsock == NULL)
     	return Error("Accept - Unable to allocate Socket instance\n");
 
-    // Everything is fine. Return a conventional pointer to the new socket
-    returnSocket = newsock.release();
     return OK;
 }
 
-
-bool Socket::Accept( Socket_ptr &sock )
-{
-    Socket *ptr;
-    bool status = Accept(ptr);
-    sock.reset(ptr);
-    return status;
-}
 
 // Some helper functions
 Handle_t Socket::NewSocket()
@@ -161,7 +149,7 @@ Handle_t Socket::NewSocket()
     return (Handle_t) fd;
 }
     
-bool Socket::NonBlocking(Handle_t fd)
+Status Socket::NonBlocking(Handle_t fd)
 {
 
   // Put the file descriptor into non-blocking mode

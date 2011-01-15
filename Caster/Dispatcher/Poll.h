@@ -51,8 +51,8 @@ public:
 	Pollable(Handle_t h);
         virtual ~Pollable();
 
-        bool WaitForRead(CallBack* c, int timeout);
-        bool WaitForWrite(CallBack* c, int timeout);
+        Status WaitForRead(CallBack* c, int timeout);
+        Status WaitForWrite(CallBack* c, int timeout);
 };
 
 
@@ -75,10 +75,10 @@ public:
     static bool Init();
     static bool Cleanup();
 
-    static bool Register(Pollable *connection);
-    static bool Deregister(Pollable *connection);
-    static bool Reap(int msec=-1);
-    static bool CheckForTimeouts();
+    static Status Register(Pollable *connection);
+    static Status Deregister(Pollable *connection);
+    static Status Reap(int msec=-1);
+    static Status CheckForTimeouts();
    
     static List<Pollable> pollList;
     static int pollfd;

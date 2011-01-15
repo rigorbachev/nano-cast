@@ -7,10 +7,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #define CASTER_SW "NtripCaster_1.0Beta(precision-gps.org)"
-
-
 
 typedef char int8;
 typedef unsigned char uint8;
@@ -24,15 +23,15 @@ typedef unsigned long intp;
 typedef uint8 byte;
 
 
-bool Event(const char *fmt, ...);
-bool Error(const char *fmt, ...);
-bool SysError(const char *fmt, ...);
-bool Verror(const char* fmt, va_list args);
-inline bool Error() {return true;}
+typedef bool Status;
+static const Status OK = false;
+Status Event(const char *fmt, ...);
+Status Error(const char *fmt, ...);
+Status SysError(const char *fmt, ...);
+Status Verror(const char* fmt, va_list args);
+inline bool Error() {return !OK;}
 void ClearError();
 int ShowErrors();
-static const bool OK = false;
-
 
 // Cygwin only
 template <class T> const T& min (const T& a, const T&b) {return (a<b)?a:b;}

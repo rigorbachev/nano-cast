@@ -12,7 +12,6 @@ class Login : public CallBack {
 public:
     Login(Connection_ptr& c, MountTable& m);
     ~Login();
-    bool Call(bool status);
 
 protected:
     Connection_ptr conn;

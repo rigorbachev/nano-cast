@@ -1,8 +1,10 @@
 #include "Login.h"
 #include "SendSourceTable.h"
+#include "Caster.h"
+#include "Date.h"
 
-#include "string.h"
-#include "unistd.h"
+#include <string.h>
+#include <unistd.h>
 
 
 Login::Login(Connection_ptr& c, MountTable& mnt)
@@ -13,7 +15,8 @@ Login::Login(Connection_ptr& c, MountTable& mnt)
 //   on the type of login
 /////////////////////////////////////////////////////////////////
 {
-    buf[0] = '\0';
+    conn->buffer[0] = '\0';
+    Call=Login::GetHeader;
 }
 
 
@@ -23,7 +26,7 @@ Login::~Login()
 
 
 
-bool Login::Call(bool status)
+Status Login::GetHeader(Status status)
 ///////////////////////////////////////////////////////////////////////////////////////
 // Call this login fragment when an event occurs
 //////////////////////////////////////////////////////////////////////////////////
@@ -35,7 +38,7 @@ bool Login::Call(bool status)
 
     // Read data into the buffer until we have a complete frame 
     ssize_t more;
-    if (conn->Read(buf+actual, BufSize-actual, more) != OK)
+    if (conn->Read(conn->buffer+actual, conn->MaxBuf-actual-1, more) != OK)
         return Error("Lost connection during login\n");
 
     // Update the characters read so far
@@ -43,28 +46,21 @@ bool Login::Call(bool status)
     buf[actual] = 0;
 
     // if we don't have a complete buffer frame, try again
-    if (!FrameComplete() && actual < BufSize)
+    if (!FrameComplete() && actual < MaxBuf-1)
         return WaitForRead(conn.get(), 10000);
 
     // if buffer is full,
-    if (actual >= BufSize)    
+    if (actual >= MaxBuf-1)
         return Error("Login buffer is full, frame not complete\n");
 
     // Start parsing the buffer, starting with first token
     Parse token(buf, actual);
     token.Next(" \r\n");
 
-    // Case: frame is a server request, process it
-    if (token == "SOURCE")
-        return ServerLogin(token);
-
-    // Case: frame is a client request, process it
-    else if (token == "GET")
-        return ClientLogin(token);
-
-    // Otherwise: error
-    else
-    	return Error("Unrecognized ntrip frame\n");
+    // Process according to the type of request
+    if      (token == "POST")    return ServerLogin(token);
+    else if (token == "GET")     return ClientLogin(token);
+    else                         return Error("Unrecognized ntrip frame\n");
 }        
 
 
@@ -75,73 +71,85 @@ bool Login::FrameComplete()
 }
 
 
-bool Login::ServerLogin(Parse& token) 
+Status Login::ServerLogin(Parse& token) 
 {    
-    // Get the password and mount point
-    char name[MaxName+1];  char password[MaxPassword+1];
-    if (GetHeader(token, name, password) != OK)
+    // Get the mount point
+    token.Next(" \r\n");
+    MountPoint* mnt = mounts.Lookup(token);
+    if (mnt == NULL)
         return Shutdown("ERROR - Mount Point Invalid\r\n\r\n");
-    
-    // Locate the mount point
-    MountPoint* mnt = mounts.Lookup(name);
-    if (mnt == NULL) 
-        return Shutdown("ERROR - Mount Point Invalid\r\n\r\n");
-
-    // Check the password
-    if (!mnt->ValidPassword(password)) 
-        return Shutdown("ERROR - Bad Password\r\n\r\n");
 
     // Make sure it is isn't already mounted
     if (mnt->IsMounted()) 
         return Shutdown("ERROR - Mount Point Taken\r\n\r\n");
 
+    // Verify the protocol is correct
+    token.Next(" \r\n");
+    if (token != "HTTP/1.1")
+        return Shutdown("ERROR - Invalid HTTP protocol\r\n\r\n");
+        
+    // Keep track of which fields we've seen
+    bool host, version, agent, authorization;
+    host = version = agent = authorization = false;
+
+    // Repeat for each line of the header
+    while (token.Next(":" != "")) {
+
+        // Process According to the field
+        if (token == "Host") {
+            token.Next(" \r\n");
+            host = true;
+        } 
+        else if (token == "Ntrip-Version") {
+            if (token.Next(" \r\n") != "Ntrip/2.0")
+                return Shutdown("ERROR - Only Ntrip/2.0 is supported\r\n\r\n");
+            version = true;
+        }
+        else if (token == "User-Agent") {
+            if (token.Next(" \r\n") != "NTRIP")
+              return Shutdown("ERROR - Must have NTRIP as User-Agent\r\n\r\n");
+            agent = true;
+        }
+        else if (token == "Authorization") {
+            if (token.Next(" \r\n") != "Basic")
+                return Shutdown("ERROR - Only supports Basic Authorization\r\n\r\n");       
+            if (!mnt->ValidPassword(token.Next(" \r\n")))
+                return Shutdown("ERROR - Bad Password\r\n\r\n");
+            authorization = true;
+        }
+    }
+
+    // Verify all necessary fields are present
+    if (!version || !agent || !authorization)
+    	return Shutdown("ERROR -- Incomplete Ntrip request\r\n\r\n");
+
     // Mount it
     if (mnt->Mount() != OK)
         return Error("Unable to Mount %s\n");
 
-    // Send the OK message
-    WriteShort("ICY 200 OK\r\n\r\n");
+    // Send the OK message.
+    //  TODO: create subtask in case can't do it all at once
+    c.Print("HTTP/1.1 200 OK\r\n"
+               "Ntrip-Version: Ntrip/2.0\r\n"
+               "Server: NTRIP NanoCast %s\r\n"
+               "Date: %s\r\n"
+               "Content-Type: gnss/data\r\n"
+               "\r\n", NanoCastVersion, getDateStr());
 
     // Switch to task for reading server data
-    return Switch(new ReadServerData(conn, mnt));
+    return Switch(ReadServerData);
 }
 
 
-bool Login::WriteShort(const char *str)
+
+Status Login::Shutdown(const char* str)
 {
-    ssize_t actual;
-    size_t len = strlen(str);
-    
-    if (conn->Write((byte*)str, len, actual) != OK || len != actual)
-        return Error("WriteShort wrote %d of % bytes\n", actual, len);
-
-    return OK;
-}
-
-    
-bool Login::GetHeader(Parse& token, char name[MaxName+1], char password[MaxPassword+1])
-{
-    token.Next("/\r\n");
-    if (token.GetDelimiter() != '/')
-        return !OK;
-    if (token.GetToken(password, MaxPassword+1) != OK)
-        return !OK;
-
-    token.Next(" \r\n");
-    if (token.GetToken(name, MaxName+1) != OK)
-        return !OK;
-
-    return OK;
-}
-
-bool Login::Shutdown(const char* str)
-{
-    WriteShort(str);
-    return !OK;
+    c.WriteShort(str);
+    return Error();
 }
     
     
-bool Login::ClientLogin(Parse& token) 
+Status Login::ClientLogin(Parse& token) 
 //////////////////////////////////////////////////////////////////////////////
 // ClientLogin handles the login of a client. Passwords are not checked.
 ///////////////////////////////////////////////////////////////////////////
@@ -158,10 +166,18 @@ bool Login::ClientLogin(Parse& token)
         return SendTable();
 
     // Send a message saying "all is fine"
-    WriteShort("ICY 200 OK\r\n\r\n");
+    // Send the OK message.
+    //  TODO: create subtask in case can't do it all at once
+    c.Print("HTTP/1.1 200 OK\r\n"
+               "Ntrip-Version: Ntrip/2.0\r\n"
+               "Server: NTRIP NanoCast %s\r\n"
+               "Date: %s\r\n"
+               "Content-Type: gnss/data\r\n"
+               "\r\n", NanoCastVersion, getDateStr());
+
 
     // Switch control to the client fragment. We are done.
-    return Switch(new SendClientData(conn, mnt));
+    return Switch(SendClientData);
 }
 
 bool Login::SendTable()
@@ -170,7 +186,15 @@ bool Login::SendTable()
 /////////////////////////////////////////////////////////////////////
 {
     // Send a message the table is coming
-    WriteShort("SOURCETABLE 200 OK\r\n");
+    // Send the OK message.
+    //  TODO: create subtask in case can't do it all at once
+    c.Print("HTTP/1.1 200 OK\r\n"
+               "Ntrip-Version: Ntrip/2.0\r\n"
+               "Server: NTRIP NanoCast %s\r\n"
+               "Date: %s\r\n"
+               "Content-Type: gnss/sourcetable\r\n"
+               "\r\n", NanoCastVersion, getDateStr());
+
 
     // Start sending the list of mount points
     return Switch(new SendSourceTable(conn, mounts));

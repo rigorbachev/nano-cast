@@ -1,12 +1,11 @@
+// TODO: Restrict the number of connected sessions.
+//   Don't want to run out of resources from having too many connections.
 
 #include "AcceptConnection.h"
 #include "Login.h"
 #include "Socket.h"
 #include "Dispatcher.h"
 
-
-// Make this a template which spawns the desired fragment type
-//   once a connection is established.
 
 AcceptConnection::AcceptConnection(int port, MountTable& mnt)
      : Mnt(mnt), sock(new Listener(port))
@@ -26,7 +25,7 @@ bool AcceptConnection::Call(bool status)
 
    // Accept a new connection;
    Socket* s;
-   if (sock->Accept(s) != OK)
+   if (sock->Accept(s) != OK || s == NULL)
         return Error("Failed to accept new connection\n");
    Connection_ptr newsock(s);
 
