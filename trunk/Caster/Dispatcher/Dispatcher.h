@@ -17,17 +17,18 @@
 // Fragment and Dispatcher must go together to support 
 //    inlining of some of the Fragment functions.
 #include "List.h"
+#include "Util.h"
 class CallBack;
 
 class Dispatcher {
 public:
-    static bool Init();
-    static bool Cleanup();
+    static Status Init();
+    static Status Cleanup();
     
-    static bool Run();
-    static bool Stop();
+    static Status Run();
+    static Status Stop();
 
-    static void Call(CallBack *h, bool status);
+    static void Call(CallBack *h, Status status);
 
     // Protected
     //   Note: we use a FifoList to prevent starvation

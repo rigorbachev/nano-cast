@@ -5,7 +5,9 @@
 #include "Util.h"  // for NULL
 #include "List.h"
 
+
 class Pollable;
+class CallBack;
 
 /** A CallBack is an object invoked to process an event
 
@@ -20,10 +22,14 @@ class Pollable;
     Call() method, a destructor and data fields.
 */
 
+typedef Status (CallBack::*CallBackMethod)(Status status);
+
 class CallBack {
 public:
     CallBack* next;
     bool status;
+
+    CallBackMethod Call;
 
 public:
     virtual ~CallBack(){}
@@ -32,20 +38,21 @@ public:
         @param status indicates a possible error for the callback to handle
         @returns !OK if the callback is complete and should be destroyed
     */     
-    virtual bool Call(bool status = OK)
-        {return Error("Handler base class resumed\n");}
+    //virtual bool DefaultCall(bool status = OK)
+        //{return Error("CallBack base class shouldn't be called\n");}
 
     /// Destroy the current callback and invoke the next
-    bool Switch(CallBack* c, bool status = OK) ;
+    //CallBack* OnExit(CallBack* c);
+    //bool Exit(bool status = OK);
 
-    /// Schedule the current callback when device is readable
+    //bool Switch(CallBack* c, bool status = OK) ;
+
+    /// Schedule the current callback when data is available
     bool WaitForRead(Pollable *p, int timeout = -1);
-
-    /// Schedule the current callback when device is writable
     bool WaitForWrite(Pollable *p, int timeout = -1);
 
     /// Reschedule the current callback
-    bool Yield();
+    //bool Yield();
 };
 
 /// A WaitList is a list of CallBacks which are waiting for something

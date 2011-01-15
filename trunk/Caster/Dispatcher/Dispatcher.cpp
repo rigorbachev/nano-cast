@@ -9,11 +9,11 @@ bool     Dispatcher::done;          // flag telling us when to stop
 
 
 
-bool Dispatcher::Init() {
+Status Dispatcher::Init() {
     return Poll::Init();
 }
 
-bool Dispatcher::Cleanup() {
+Status Dispatcher::Cleanup() {
     Poll::Cleanup();
     runList.Delete();
     return OK;
@@ -22,7 +22,7 @@ bool Dispatcher::Cleanup() {
 
 
 
-bool Dispatcher::Run()
+Status Dispatcher::Run()
 {
     // We are starting anew
     done = false;
@@ -33,8 +33,10 @@ bool Dispatcher::Run()
     	// Invoke the runnable handlers  (careful, could loop!)
     	while (runList.Head() != NULL) {
     		CallBack *h = runList.Pop();
+                CallBackMethod m = h->Call;
                 debug("Dispatcher::Run() - calling %p\n", h);
-    		if (h->Call(h->status) != OK)
+               
+    		if ((h->*m)(h->status) != OK)
     			delete h;
     	}
 
@@ -53,14 +55,14 @@ bool Dispatcher::Run()
 
 
 
-bool Dispatcher::Stop()
+Status Dispatcher::Stop()
 {
     done = true;
     return OK;
 }
 
 
-void Dispatcher::Call(CallBack *h, bool status)
+void Dispatcher::Call(CallBack *h, Status status)
 {
     debug("Dispatcher::Call(%p, %d)\n", h, status);
 	h->status = status;

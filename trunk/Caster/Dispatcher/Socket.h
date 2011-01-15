@@ -12,6 +12,7 @@
 
 #include "Util.h"
 #include "Connection.h"
+#include <boost/shared_ptr.hpp>
 
 
 class NetAddress {
@@ -30,27 +31,38 @@ public:
 
 // An automatic pointer for Sockets
 class Socket;
-typedef std::auto_ptr<Socket> Socket_ptr;
+//typedef std::auto_ptr<Socket> Socket_ptr;
+typedef boost::shared_ptr<Socket> Socket_ptr;
 
 
 class Socket : public Connection {
 public:
 	Socket(Handle_t handle = NewSocket());
 
-	bool Connect(NetAddress& addr);
-	bool Listen(int port);
-	bool Accept(Socket *(&newsock));
-        bool Accept(Socket_ptr &newsock);
+	Status Connect(NetAddress& addr);
+	Status Listen(int port);
 
-	bool Read(byte* buf, size_t len, ssize_t &actual);
-	bool Write(const byte* buf, size_t len, ssize_t &actual);
+        Status Accept(Socket*& s);
+        template <typename T>
+            Status Accept( boost::shared_ptr<T>& sp )
+            {
+                Socket* ptr;  
+                if (Accept(ptr)!= OK) return !OK;  
+                sp.reset((T*)ptr); 
+                return OK;
+            }
+
+	Status Read(byte* buf, size_t len, ssize_t &actual);
+	Status Write(const byte* buf, size_t len, ssize_t &actual);
      
         static Handle_t NewSocket();
-        static bool NonBlocking(Handle_t fd);
+        static Status NonBlocking(Handle_t fd);
+
 };
 
 class Listener;
-typedef std::auto_ptr<Listener> Listener_ptr;
+//typedef std::auto_ptr<Listener> Listener_ptr;
+typedef boost::shared_ptr<Listener> Listener_ptr;
 
 class Listener : public Socket {
 public:
